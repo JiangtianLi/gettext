@@ -155,12 +155,20 @@ func inspectNodeForTranslations(fset *token.FileSet, f *ast.File, n ast.Node) bo
 				i18nStr = constructValue(x.Args[0])
 			}
 		case *ast.SelectorExpr:
-			if sel.Sel.Name == gettextFuncNamePlural && sel.X.(*ast.Ident).Name == gettextSelectorPlural {
+			// support nested selector, e.g., a.b.c
+			var exprName string
+			switch expr := sel.X.(type) {
+			case *ast.Ident:
+				exprName = expr.Name
+			case *ast.SelectorExpr:
+				exprName = expr.Sel.Name
+			}
+			if sel.Sel.Name == gettextFuncNamePlural && exprName == gettextSelectorPlural {
 				i18nStr = x.Args[0].(*ast.BasicLit).Value
 				i18nStrPlural = x.Args[1].(*ast.BasicLit).Value
 			}
 
-			if sel.Sel.Name == gettextFuncName && sel.X.(*ast.Ident).Name == gettextSelector {
+			if sel.Sel.Name == gettextFuncName && exprName == gettextSelector {
 				i18nStr = constructValue(x.Args[0])
 			}
 		}
